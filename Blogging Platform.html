@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NovaBlog — Tech & Innovation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ─── DESIGN TOKENS ─── */
+  :root {
+    --navy:      #0d1b2a;
+    --navy-mid:  #132338;
+    --navy-soft: #1c3251;
+    --emerald:   #2dd4a0;
+    --emerald-dim:#1a9e76;
+    --purple:    #a78bfa;
+    --purple-dim:#7c5cdc;
+    --cream:     #f5f3ee;
+    --muted:     #8fa3b8;
+    --white:     #ffffff;
+    --border:    rgba(45,212,160,0.15);
+    --card-bg:   rgba(19,35,56,0.7);
+    --radius:    12px;
+    --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--navy);
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── AURORA BACKGROUND ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 10% 0%, rgba(167,139,250,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 90% 20%, rgba(45,212,160,0.10) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 40% at 50% 80%, rgba(167,139,250,0.07) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── NOISE TEXTURE ─── */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* ─── LAYOUT ─── */
+  .page-wrap { position: relative; z-index: 1; }
+
+  /* ─── NAV ─── */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 4rem;
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    background: rgba(13,27,42,0.85);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: var(--white);
+    cursor: pointer;
+  }
+  .nav-logo span { color: var(--emerald); }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.88rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: color var(--transition);
+    cursor: pointer;
+  }
+  .nav-links a:hover, .nav-links a.active { color: var(--emerald); }
+
+  .nav-actions { display: flex; gap: 0.75rem; align-items: center; }
+
+  .btn {
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 0.55rem 1.25rem;
+    transition: all var(--transition);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { color: var(--emerald); border-color: var(--emerald); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--emerald-dim), var(--emerald));
+    color: var(--navy);
+    font-weight: 700;
+    box-shadow: 0 4px 20px rgba(45,212,160,0.25);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(45,212,160,0.4); }
+
+  /* ─── VIEWS ─── */
+  .view { display: none; animation: fadeUp 0.5s ease both; }
+  .view.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ══════════════════════════════════════
+     HOME VIEW
+  ══════════════════════════════════════ */
+
+  /* Hero */
+  .hero {
+    padding: 5rem 4rem 4rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--emerald);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--white);
+    margin-bottom: 1.25rem;
+  }
+  .hero h1 em { font-style: italic; color: var(--emerald); }
+  .hero-sub {
+    color: var(--muted);
+    font-size: 1rem;
+    max-width: 420px;
+    margin-bottom: 2rem;
+    line-height: 1.8;
+  }
+  .hero-cta { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .btn-lg { padding: 0.85rem 2rem; font-size: 0.95rem; border-radius: 10px; }
+
+  .hero-visual {
+    position: relative;
+    height: 340px;
+  }
+  .aurora-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(55px);
+    animation: pulse 6s ease-in-out infinite alternate;
+  }
+  .orb-1 { width:260px; height:260px; background: rgba(167,139,250,0.2); top:0; right:0; animation-delay:0s; }
+  .orb-2 { width:200px; height:200px; background: rgba(45,212,160,0.15); bottom:0; left:20px; animation-delay:2s; }
+  @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.12); } }
+
+  .featured-card-hero {
+    position: relative;
+    z-index: 2;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    backdrop-filter: blur(16px);
+    margin: 1.5rem;
+    transition: transform var(--transition);
+  }
+  .featured-card-hero:hover { transform: translateY(-4px); }
+  .card-tag {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.7rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+  .tag-ai    { background: rgba(167,139,250,0.15); color: var(--purple); border: 1px solid rgba(167,139,250,0.25); }
+  .tag-code  { background: rgba(45,212,160,0.12); color: var(--emerald); border: 1px solid rgba(45,212,160,0.2); }
+  .tag-gadget{ background: rgba(255,180,100,0.1); color:#ffb464; border:1px solid rgba(255,180,100,0.2); }
+  .tag-future{ background: rgba(100,160,255,0.1); color:#64a0ff; border:1px solid rgba(100,160,255,0.2); }
+
+  .featured-card-hero h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1.3;
+    margin-bottom: 0.75rem;
+  }
+  .featured-card-hero p { color: var(--muted); font-size: 0.9rem; }
+  .card-meta { display: flex; gap: 1rem; margin-top: 1.25rem; font-size: 0.8rem; color: var(--muted); align-items: center; }
+  .avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--emerald-dim), var(--purple-dim));
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 700; color: var(--white);
+  }
+
+  /* Section headers */
+  .section-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 0 4rem; margin-bottom: 2rem;
+    max-width: 1200px; margin-left: auto; margin-right: auto;
+  }
+  .section-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--white);
+  }
+  .section-label span { color: var(--emerald); }
+  .see-all { font-size: 0.82rem; color: var(--emerald); cursor: pointer; letter-spacing: 0.05em; }
+  .see-all:hover { text-decoration: underline; }
+
+  /* Posts grid */
+  .posts-section { padding: 1rem 4rem 4rem; max-width: 1200px; margin: 0 auto; }
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .post-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    backdrop-filter: blur(12px);
+    cursor: pointer;
+    transition: all var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+  .post-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--emerald), var(--purple));
+    opacity: 0;
+    transition: opacity var(--transition);
+  }
+  .post-card:hover { transform: translateY(-5px); border-color: rgba(45,212,160,0.3); box-shadow: 0 16px 40px rgba(0,0,0,0.3); }
+  .post-card:hover::before { opacity: 1; }
+
+  .post-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1.35;
+    margin: 0.75rem 0 0.6rem;
+  }
+  .post-card p { font-size: 0.87rem; color: var(--muted); line-height: 1.7; }
+  .post-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+  .read-time { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted); }
+  .read-btn { font-size: 0.8rem; color: var(--emerald); cursor: pointer; transition: gap var(--transition); display: flex; align-items: center; gap: 4px; }
+  .read-btn:hover { gap: 8px; }
+
+  /* Sidebar Topics */
+  .home-layout { display: grid; grid-template-columns: 1fr 280px; gap: 3rem; padding: 0 4rem 4rem; max-width: 1200px; margin: 0 auto; }
+  .topics-sidebar h4 { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--white); margin-bottom: 1.25rem; }
+  .topic-pill {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+    margin-bottom: 0.6rem;
+    cursor: pointer;
+    transition: all var(--transition);
+    font-size: 0.87rem;
+    color: var(--muted);
+  }
+  .topic-pill:hover { border-color: var(--emerald); color: var(--emerald); background: rgba(45,212,160,0.05); }
+  .topic-count { font-family: 'DM Mono', monospace; font-size: 0.72rem; background: rgba(45,212,160,0.1); color: var(--emerald); padding: 0.2rem 0.5rem; border-radius: 4px; }
+
+  /* ══════════════════════════════════════
+     WRITE VIEW
+  ══════════════════════════════════════ */
+  .write-view { max-width: 860px; margin: 0 auto; padding: 3rem 2rem 5rem; }
+  .write-header { margin-bottom: 2.5rem; }
+  .write-header h2 { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: var(--white); }
+  .write-header p { color: var(--muted); font-size: 0.9rem; margin-top: 0.4rem; }
+
+  .form-group { margin-bottom: 1.5rem; }
+  .form-label { display: block; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.6rem; font-family: 'DM Mono', monospace; }
+
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    padding: 0.85rem 1.1rem;
+    outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  .form-input::placeholder, .form-textarea::placeholder { color: var(--muted); }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--emerald);
+    box-shadow: 0 0 0 3px rgba(45,212,160,0.1);
+  }
+  .form-select { cursor: pointer; }
+  .form-select option { background: var(--navy-mid); }
+
+  .title-input {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    padding: 1rem 1.2rem;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    color: var(--white);
+    width: 100%;
+    outline: none;
+  }
+  .title-input::placeholder { color: rgba(255,255,255,0.2); }
+  .title-input:focus { border-bottom-color: var(--emerald); box-shadow: none; }
+
+  .toolbar {
+    display: flex; gap: 0.4rem; padding: 0.75rem 1rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    flex-wrap: wrap;
+  }
+  .tool-btn {
+    background: transparent; border: none; cursor: pointer;
+    color: var(--muted); font-size: 0.85rem; padding: 0.35rem 0.6rem;
+    border-radius: 5px; transition: all var(--transition);
+    font-family: 'DM Sans', sans-serif;
+  }
+  .tool-btn:hover { background: rgba(45,212,160,0.1); color: var(--emerald); }
+  .tool-sep { width: 1px; background: var(--border); margin: 0 0.2rem; }
+
+  .content-area {
+    min-height: 320px; padding: 1.25rem 1.2rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 0 0 8px 8px;
+    color: var(--cream); font-size: 0.95rem; line-height: 1.8;
+    outline: none; resize: vertical;
+    width: 100%; font-family: 'DM Sans', sans-serif;
+  }
+  .content-area:focus { border-color: var(--emerald); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+
+  .word-count { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--muted); text-align: right; margin-top: 0.4rem; }
+
+  .write-actions { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+
+  /* ══════════════════════════════════════
+     MY POSTS VIEW
+  ══════════════════════════════════════ */
+  .my-posts-view { padding: 3rem 4rem 5rem; max-width: 1200px; margin: 0 auto; }
+  .my-posts-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem; }
+  .my-posts-header h2 { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: var(--white); }
+  .my-posts-header p { color: var(--muted); font-size: 0.88rem; margin-top: 0.3rem; }
+
+  .posts-table { width: 100%; border-collapse: collapse; }
+  .posts-table th {
+    text-align: left; padding: 0.75rem 1rem;
+    font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .posts-table td { padding: 1.1rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+  .posts-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .post-title-cell { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--white); font-weight: 600; }
+  .post-title-cell small { display: block; font-family: 'DM Sans', sans-serif; font-size: 0.8rem; color: var(--muted); font-weight: 300; margin-top: 0.2rem; }
+
+  .status-badge {
+    display: inline-block; padding: 0.2rem 0.65rem; border-radius: 4px;
+    font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.05em;
+  }
+  .status-published { background: rgba(45,212,160,0.12); color: var(--emerald); border: 1px solid rgba(45,212,160,0.2); }
+  .status-draft     { background: rgba(167,139,250,0.1); color: var(--purple); border: 1px solid rgba(167,139,250,0.2); }
+
+  .action-icons { display: flex; gap: 0.5rem; }
+  .icon-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    border-radius: 6px; padding: 0.35rem 0.7rem; cursor: pointer; font-size: 0.8rem;
+    transition: all var(--transition); font-family: 'DM Sans', sans-serif;
+  }
+  .icon-btn:hover { border-color: var(--emerald); color: var(--emerald); }
+  .icon-btn.del:hover { border-color: #f87171; color: #f87171; }
+
+  /* Empty state */
+  .empty-state { text-align: center; padding: 5rem 2rem; }
+  .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
+  .empty-state h3 { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--white); margin-bottom: 0.5rem; }
+  .empty-state p { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+
+  /* ══════════════════════════════════════
+     READ VIEW (single post)
+  ══════════════════════════════════════ */
+  .read-view { max-width: 720px; margin: 0 auto; padding: 3rem 2rem 6rem; }
+  .back-link { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--muted); font-size: 0.85rem; cursor: pointer; margin-bottom: 2.5rem; transition: color var(--transition); }
+  .back-link:hover { color: var(--emerald); }
+
+  .post-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 900; line-height: 1.15;
+    color: var(--white); margin: 1rem 0 1.5rem;
+    letter-spacing: -0.02em;
+  }
+  .post-meta-bar { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+  .post-author { display: flex; align-items: center; gap: 0.6rem; font-size: 0.88rem; color: var(--muted); }
+  .post-author strong { color: var(--cream); }
+  .post-body { font-size: 1.05rem; line-height: 1.9; color: rgba(245,243,238,0.9); }
+  .post-body p { margin-bottom: 1.5rem; }
+  .post-body h2 { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--white); margin: 2.5rem 0 1rem; }
+  .post-body code { font-family: 'DM Mono', monospace; font-size: 0.88rem; background: rgba(45,212,160,0.1); color: var(--emerald); padding: 0.15rem 0.45rem; border-radius: 4px; }
+  .post-body blockquote { border-left: 3px solid var(--emerald); padding-left: 1.25rem; color: var(--muted); font-style: italic; margin: 2rem 0; }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed; bottom: 2rem; right: 2rem; z-index: 999;
+    background: var(--navy-soft); border: 1px solid var(--emerald);
+    color: var(--cream); padding: 0.9rem 1.5rem; border-radius: 10px;
+    font-size: 0.88rem; box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast .t-icon { color: var(--emerald); margin-right: 0.5rem; }
+
+  /* ─── DIVIDER ─── */
+  .divider { height: 1px; background: var(--border); margin: 0 4rem; max-width: 1200px; margin-left: auto; margin-right: auto; }
+
+  /* ─── FOOTER ─── */
+  footer {
+    padding: 2rem 4rem; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    color: var(--muted); font-size: 0.82rem;
+  }
+  footer span { font-family: 'DM Mono', monospace; }
+  .footer-logo { font-family: 'Playfair Display', serif; font-weight: 900; color: var(--white); }
+  .footer-logo em { color: var(--emerald); font-style: normal; }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { display: none; }
+    .hero { grid-template-columns: 1fr; padding: 3rem 1.5rem 2rem; gap: 2rem; }
+    .hero-visual { height: 220px; }
+    .posts-section { padding: 1rem 1.5rem 3rem; }
+    .posts-grid { grid-template-columns: 1fr; }
+    .home-layout { grid-template-columns: 1fr; padding: 0 1.5rem 3rem; }
+    .section-header { padding: 0 1.5rem; }
+    .my-posts-view { padding: 2rem 1.5rem; }
+    footer { flex-direction: column; gap: 0.5rem; text-align: center; padding: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<!-- ─── NAV ─── -->
+<nav>
+  <div class="nav-logo" onclick="showView('home')">Nova<span>Blog</span></div>
+  <ul class="nav-links">
+    <li><a onclick="showView('home')" class="active" id="nav-home">Discover</a></li>
+    <li><a onclick="showView('write')" id="nav-write">Write</a></li>
+    <li><a onclick="showView('my-posts')" id="nav-my-posts">My Posts</a></li>
+  </ul>
+  <div class="nav-actions">
+    <button class="btn btn-ghost" onclick="showView('my-posts')">My Posts</button>
+    <button class="btn btn-primary" onclick="showView('write')">+ New Post</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════
+     HOME VIEW
+═══════════════════════════════ -->
+<div class="view active" id="view-home">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div>
+      <p class="hero-eyebrow">// Tech & Innovation Journal</p>
+      <h1>Where <em>Ideas</em><br/>Meet the Future</h1>
+      <p class="hero-sub">Deep dives into artificial intelligence, emerging code paradigms, and the gadgets reshaping our world — written by humans, for humans.</p>
+      <div class="hero-cta">
+        <button class="btn btn-primary btn-lg" onclick="showView('write')">Start Writing</button>
+        <button class="btn btn-ghost btn-lg" onclick="scrollToLatest()">Explore Posts ↓</button>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="aurora-orb orb-1"></div>
+      <div class="aurora-orb orb-2"></div>
+      <div class="featured-card-hero" onclick="openPost(samplePosts[0])" style="cursor:pointer">
+        <span class="card-tag tag-ai">Artificial Intelligence</span>
+        <h3>GPT-5 and the Threshold of Emergent Reasoning</h3>
+        <p>How the next generation of language models is crossing the line between pattern matching and genuine understanding.</p>
+        <div class="card-meta">
+          <div class="avatar">AK</div>
+          <span>Aria Kessler</span>
+          <span>·</span>
+          <span>8 min read</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Latest posts -->
+  <div id="latest-anchor"></div>
+  <div class="section-header" style="margin-top:2rem; padding-bottom:0">
+    <div class="section-label">Latest <span>Posts</span></div>
+    <span class="see-all">View all →</span>
+  </div>
+
+  <div class="home-layout">
+    <section class="posts-section" style="padding: 0;">
+      <div class="posts-grid" id="home-posts-grid">
+        <!-- filled by JS -->
+      </div>
+    </section>
+
+    <!-- Sidebar -->
+    <aside class="topics-sidebar">
+      <h4>Browse Topics</h4>
+      <div class="topic-pill"><span>🤖 Artificial Intelligence</span><span class="topic-count">12</span></div>
+      <div class="topic-pill"><span>💻 Open Source</span><span class="topic-count">8</span></div>
+      <div class="topic-pill"><span>⚡ Edge Computing</span><span class="topic-count">5</span></div>
+      <div class="topic-pill"><span>🔬 Quantum Tech</span><span class="topic-count">4</span></div>
+      <div class="topic-pill"><span>📱 Gadgets</span><span class="topic-count">9</span></div>
+      <div class="topic-pill"><span>🛡️ Cybersecurity</span><span class="topic-count">6</span></div>
+      <div class="topic-pill"><span>🌐 Web3 & Blockchain</span><span class="topic-count">3</span></div>
+    </aside>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     WRITE VIEW
+═══════════════════════════════ -->
+<div class="view" id="view-write">
+  <div class="write-view">
+    <div class="write-header">
+      <h2>Craft Your Post</h2>
+      <p>Share your insight with the NovaBlog community</p>
+    </div>
+
+    <div class="form-group">
+      <input class="form-input title-input" id="post-title" type="text" placeholder="Your compelling headline…" />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-input form-select" id="post-category">
+          <option value="ai">Artificial Intelligence</option>
+          <option value="code">Open Source / Code</option>
+          <option value="gadget">Gadgets & Hardware</option>
+          <option value="future">Future Tech</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Author Name</label>
+        <input class="form-input" id="post-author" type="text" placeholder="Your name" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Content</label>
+      <div class="toolbar">
+        <button class="tool-btn" onclick="formatText('bold')"><b>B</b></button>
+        <button class="tool-btn" onclick="formatText('italic')"><i>I</i></button>
+        <div class="tool-sep"></div>
+        <button class="tool-btn" onclick="insertHeading()">H2</button>
+        <button class="tool-btn" onclick="insertQuote()">❝</button>
+        <button class="tool-btn" onclick="insertCode()">{ }</button>
+        <div class="tool-sep"></div>
+        <button class="tool-btn" onclick="insertBullet()">• List</button>
+      </div>
+      <textarea class="form-input content-area" id="post-content" placeholder="Write your article here… Use the toolbar to format your content." oninput="updateWordCount()"></textarea>
+      <div class="word-count" id="word-count">0 words</div>
+    </div>
+
+    <div class="write-actions">
+      <button class="btn btn-ghost" onclick="saveDraft()">Save Draft</button>
+      <button class="btn btn-primary btn-lg" onclick="publishPost()">Publish Post ↗</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     MY POSTS VIEW
+═══════════════════════════════ -->
+<div class="view" id="view-my-posts">
+  <div class="my-posts-view">
+    <div class="my-posts-header">
+      <div>
+        <h2>My Posts</h2>
+        <p>Manage your published articles and drafts</p>
+      </div>
+      <button class="btn btn-primary" onclick="showView('write')">+ New Post</button>
+    </div>
+    <div id="my-posts-content"><!-- filled by JS --></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     READ VIEW
+═══════════════════════════════ -->
+<div class="view" id="view-read">
+  <div class="read-view">
+    <div class="back-link" onclick="showView('home')">← Back to Discover</div>
+    <div id="read-content"><!-- filled by JS --></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"><span class="t-icon">✓</span><span id="toast-msg">Done!</span></div>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-logo">Nova<em>Blog</em></div>
+  <span>// Built with HTML · CSS · JavaScript</span>
+  <span>Aurora Borealis Theme · Tech Edition</span>
+</footer>
+
+</div><!-- /page-wrap -->
+
+<script>
+/* ══════════════════════════════════════
+   DATA
+══════════════════════════════════════ */
+const categoryMap = {
+  ai:     { label:'Artificial Intelligence', cls:'tag-ai' },
+  code:   { label:'Open Source / Code',      cls:'tag-code' },
+  gadget: { label:'Gadgets & Hardware',      cls:'tag-gadget' },
+  future: { label:'Future Tech',             cls:'tag-future' }
+};
+
+const samplePosts = [
+  {
+    id:'s1', title:'GPT-5 and the Threshold of Emergent Reasoning',
+    category:'ai', author:'Aria Kessler', initials:'AK',
+    excerpt:'How the next generation of language models is crossing the line between pattern matching and genuine understanding — and what this means for developers.',
+    body:`<p>For years, critics of large language models argued that they were sophisticated autocomplete engines — impressive in scope, but hollow in understanding. The arrival of GPT-5 has forced a rethinking of that narrative.</p>
+<h2>What Changed?</h2>
+<p>The model demonstrates what researchers at MIT now call <code>emergent reasoning chains</code> — the ability to construct multi-step logical arguments that were never explicitly present in training data.</p>
+<blockquote>"We didn't teach it to reason about novel physics scenarios. It just… did." — Dr. Chen Wei, MIT CSAIL</blockquote>
+<p>This represents a qualitative leap, not merely a quantitative one. Scale alone doesn't explain the jump in capability from GPT-4 to GPT-5.</p>
+<h2>Implications for Developers</h2>
+<p>If your applications rely on LLMs, this changes the architecture calculus entirely. Tasks that previously required retrieval-augmented pipelines can now be handled in a single context window with far greater coherence. The toolchain is being rewritten in real time.</p>
+<p>The frontier is moving fast. Staying still is falling behind.</p>`,
+    readTime:'8 min', date:'Jun 2, 2026', status:'published'
+  },
+  {
+    id:'s2', title:'Rust in 2026: The Language That Won Systems Programming',
+    category:'code', author:'Marco Delvi', initials:'MD',
+    excerpt:'A deep look at how Rust went from niche to necessity across the Linux kernel, WASM runtimes, and embedded systems.',
+    body:`<p>When Rust first appeared in Mozilla's blog posts circa 2010, most C++ veterans rolled their eyes. By 2026, those same veterans are rewriting critical infrastructure in it.</p>
+<h2>The Numbers Don't Lie</h2>
+<p>The Linux kernel now contains over 800,000 lines of Rust. Microsoft reports 70% reduction in memory-safety CVEs in components migrated to Rust. Android's Bluetooth stack — fully Rust since 2023 — has had zero memory-safety bugs in production.</p>
+<blockquote>"The borrow checker is not your enemy. It's the colleague you never had who actually caught your mistakes." — Linus Torvalds, 2025 kernel summit</blockquote>
+<h2>What This Means for You</h2>
+<p>If you're still writing performance-critical code in C or C++, the migration pressure is real. The ecosystem has matured: <code>cargo</code> is excellent, async Rust is stable, and the embedded HAL crates cover 90% of microcontroller targets.</p>
+<p>The question isn't whether to learn Rust. It's when.</p>`,
+    readTime:'6 min', date:'May 28, 2026', status:'published'
+  },
+  {
+    id:'s3', title:'The $299 Spatial Computer That Changes Everything',
+    category:'gadget', author:'Priya Nair', initials:'PN',
+    excerpt:'Meta\'s Orion successor just launched at a price point nobody predicted. Here\'s what the hardware actually delivers.',
+    body:`<p>When the Orion glasses launched at $3,500, most people assumed spatial computing would remain a luxury segment. Meta's new $299 entry just obliterated that assumption.</p>
+<h2>The Hardware Story</h2>
+<p>The device packs a custom 4nm silicon with dedicated NPU, 8-hour battery life in a form factor indistinguishable from regular eyewear. Waveguide display technology borrowed from the military sector renders crisp AR overlays at 60fps.</p>
+<p>The trick? Manufacturing scale. Meta reportedly committed to 20 million units for the first production run — an order of magnitude larger than any previous AR device — allowing them to eat margin on hardware and monetize through the platform.</p>
+<h2>Developer Opportunity</h2>
+<p>Spatial APIs are now available via <code>MetaXR SDK 4.0</code>. The programming model is closer to React than to traditional game engines — a deliberate choice to lower the barrier for web developers entering the space.</p>
+<p>This is the iPhone moment for spatial computing. Build accordingly.</p>`,
+    readTime:'5 min', date:'May 20, 2026', status:'published'
+  },
+  {
+    id:'s4', title:'Quantum Supremacy Is Dead. Quantum Advantage Is Very Much Alive',
+    category:'future', author:'Jin-Ho Park', initials:'JP',
+    excerpt:'Why the field moved on from the supremacy narrative — and what practical quantum advantage looks like in 2026.',
+    body:`<p>The term "quantum supremacy" — coined to describe a quantum computer performing a task no classical machine could replicate — has quietly been retired from the scientific lexicon. Not because quantum computers failed, but because the goalposts were wrong from the start.</p>
+<h2>The Real Benchmark</h2>
+<p>Quantum advantage — performing a useful, commercially relevant task faster than classical hardware — is the metric that matters. And by this measure, 2026 has been a breakthrough year.</p>
+<p>IBM's 2,000-qubit Condor system demonstrated drug molecule simulation at accuracy levels that would require years on classical supercomputers. TSMC is using hybrid quantum-classical optimization for wafer defect detection, reducing fab waste by 12%.</p>
+<blockquote>"Forget the chess match. Quantum computers are winning the games that actually matter." — Dr. Sarah Nguyen, IBM Quantum</blockquote>
+<h2>Your Timeline</h2>
+<p>Practical quantum advantage is not a decade away. For specific domains — logistics optimization, molecular simulation, cryptographic key generation — it's available today via cloud APIs. The question is whether your problem fits the current hardware constraints.</p>`,
+    readTime:'7 min', date:'May 14, 2026', status:'published'
+  },
+  {
+    id:'s5', title:'Edge AI: Why the Cloud is No Longer the Answer',
+    category:'ai', author:'Aria Kessler', initials:'AK',
+    excerpt:'Latency, privacy, and resilience are driving the next wave of intelligence — and it lives on the device.',
+    body:`<p>The centralized cloud AI model made perfect sense when devices were dumb and connectivity was reliable. In 2026, neither assumption holds.</p>
+<h2>The Three Pressures</h2>
+<p>Latency: Autonomous vehicles cannot wait 40ms for a cloud inference. Privacy: Healthcare and legal sectors face mounting regulation around data leaving the device. Resilience: When connectivity drops, cloud-dependent AI becomes useless.</p>
+<p>Edge AI addresses all three simultaneously. Apple's Neural Engine, Qualcomm's Hexagon DSP, and Google's Tensor chip have all crossed the threshold where on-device inference for medium-complexity models is genuinely viable.</p>
+<h2>The Architecture Shift</h2>
+<p>The new pattern is <code>cloud-for-training, edge-for-inference</code>. Train massive models centrally, then distill and quantize for deployment. Tools like <code>ExecuTorch</code> and <code>ONNX Runtime</code> make the pipeline tractable.</p>
+<p>If you're building AI products today, design for the edge first. Cloud fallback is a feature, not the foundation.</p>`,
+    readTime:'6 min', date:'May 8, 2026', status:'published'
+  },
+  {
+    id:'s6', title:'Open Source AI: The Models Big Tech Doesn\'t Want You to Use',
+    category:'code', author:'Marco Delvi', initials:'MD',
+    excerpt:'Mistral, Llama 3, and DeepSeek have quietly matched GPT-4 capabilities. The implications are enormous.',
+    body:`<p>Eighteen months ago, the open-source AI community was playing catch-up. Today, it has caught up — and in some benchmarks, surpassed — the frontier models from OpenAI and Anthropic.</p>
+<h2>The Models to Know</h2>
+<p>Mistral Large 2 runs inference on a single A100 GPU and beats GPT-4-turbo on coding benchmarks. DeepSeek V3, trained for a fraction of GPT-4's reported cost, scores within 3% on MMLU. Llama 3.3 is fine-tunable on consumer hardware.</p>
+<p>The commoditization of AI capability is accelerating faster than anyone predicted.</p>
+<h2>What This Unlocks</h2>
+<p>Local deployment. No API costs. Full data privacy. The ability to fine-tune on proprietary data without sending it to a third party. For enterprises, this is transformative.</p>
+<blockquote>"The best model is the one you can actually deploy in your environment." — Yann LeCun</blockquote>
+<p>The era of AI sovereignty has arrived. Knowing how to work with open-weight models is now a core engineering skill.</p>`,
+    readTime:'5 min', date:'Apr 30, 2026', status:'published'
+  }
+];
+
+// User-created posts stored in memory
+let userPosts = [];
+
+/* ══════════════════════════════════════
+   VIEW MANAGEMENT
+══════════════════════════════════════ */
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + name.replace('-',''));
+  if (navEl) navEl.classList.add('active');
+  if (name === 'home') renderHomeGrid();
+  if (name === 'my-posts') renderMyPosts();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function scrollToLatest() {
+  document.getElementById('latest-anchor').scrollIntoView({behavior:'smooth'});
+}
+
+/* ══════════════════════════════════════
+   RENDER HOME GRID
+══════════════════════════════════════ */
+function renderHomeGrid() {
+  const allPosts = [...userPosts.filter(p=>p.status==='published'), ...samplePosts];
+  const grid = document.getElementById('home-posts-grid');
+  grid.innerHTML = allPosts.map(p => `
+    <article class="post-card" onclick="openPost(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+      <span class="card-tag ${categoryMap[p.category].cls}">${categoryMap[p.category].label}</span>
+      <h3>${p.title}</h3>
+      <p>${p.excerpt}</p>
+      <div class="post-footer">
+        <span class="read-time">⏱ ${p.readTime}</span>
+        <span class="read-btn">Read <span>→</span></span>
+      </div>
+    </article>
+  `).join('');
+}
+
+/* ══════════════════════════════════════
+   OPEN SINGLE POST
+══════════════════════════════════════ */
+function openPost(post) {
+  const rc = document.getElementById('read-content');
+  rc.innerHTML = `
+    <span class="card-tag ${categoryMap[post.category].cls}">${categoryMap[post.category].label}</span>
+    <h1 class="post-heading">${post.title}</h1>
+    <div class="post-meta-bar">
+      <div class="post-author">
+        <div class="avatar">${post.initials || post.author.split(' ').map(w=>w[0]).join('')}</div>
+        <div><strong>${post.author}</strong></div>
+      </div>
+      <span class="read-time" style="font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--muted)">⏱ ${post.readTime}</span>
+      <span style="font-size:0.82rem;color:var(--muted)">${post.date}</span>
+    </div>
+    <div class="post-body">${post.body || '<p>' + post.excerpt + '</p>'}</div>
+  `;
+  showView('read');
+}
+
+/* ══════════════════════════════════════
+   WRITE / PUBLISH
+══════════════════════════════════════ */
+function updateWordCount() {
+  const text = document.getElementById('post-content').value;
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  document.getElementById('word-count').textContent = words + ' word' + (words !== 1 ? 's' : '');
+}
+
+function formatText(cmd) {
+  document.getElementById('post-content').focus();
+  document.execCommand(cmd);
+}
+
+function insertHeading() {
+  const ta = document.getElementById('post-content');
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  const sel = ta.value.slice(start, end) || 'Heading';
+  ta.setRangeText('\n## ' + sel + '\n', start, end, 'end');
+  updateWordCount();
+}
+
+function insertQuote() {
+  const ta = document.getElementById('post-content');
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  const sel = ta.value.slice(start, end) || 'Your quote here';
+  ta.setRangeText('\n> ' + sel + '\n', start, end, 'end');
+  updateWordCount();
+}
+
+function insertCode() {
+  const ta = document.getElementById('post-content');
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  const sel = ta.value.slice(start, end) || 'code';
+  ta.setRangeText('`' + sel + '`', start, end, 'end');
+  updateWordCount();
+}
+
+function insertBullet() {
+  const ta = document.getElementById('post-content');
+  const start = ta.selectionStart;
+  ta.setRangeText('\n• Item one\n• Item two\n• Item three\n', start, start, 'end');
+  updateWordCount();
+}
+
+function getNewPost(status) {
+  const title   = document.getElementById('post-title').value.trim();
+  const content = document.getElementById('post-content').value.trim();
+  const author  = document.getElementById('post-author').value.trim() || 'Anonymous';
+  const category= document.getElementById('post-category').value;
+
+  if (!title) { showToast('Please add a title before ' + (status==='published'?'publishing':'saving')); return null; }
+  if (status==='published' && !content) { showToast('Content cannot be empty'); return null; }
+
+  const words = content ? content.trim().split(/\s+/).length : 0;
+  const mins  = Math.max(1, Math.ceil(words / 200));
+  const initials = author.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || 'AN';
+
+  return {
+    id: 'u' + Date.now(),
+    title, category, author, initials,
+    excerpt: content.slice(0, 140) + (content.length > 140 ? '…' : ''),
+    body: '<p>' + content.replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>') + '</p>',
+    readTime: mins + ' min',
+    date: new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+    status
+  };
+}
+
+function publishPost() {
+  const post = getNewPost('published');
+  if (!post) return;
+  userPosts.unshift(post);
+  clearForm();
+  showToast('Post published successfully!');
+  setTimeout(() => showView('home'), 800);
+}
+
+function saveDraft() {
+  const post = getNewPost('draft');
+  if (!post) return;
+  userPosts.unshift(post);
+  clearForm();
+  showToast('Draft saved');
+  setTimeout(() => showView('my-posts'), 600);
+}
+
+function clearForm() {
+  ['post-title','post-content','post-author'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('word-count').textContent = '0 words';
+}
+
+/* ══════════════════════════════════════
+   MY POSTS
+══════════════════════════════════════ */
+function renderMyPosts() {
+  const el = document.getElementById('my-posts-content');
+  if (!userPosts.length) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">✍️</div>
+      <h3>No posts yet</h3>
+      <p>Your published articles and drafts will appear here.</p>
+      <button class="btn btn-primary btn-lg" onclick="showView('write')">Write Your First Post</button>
+    </div>`;
+    return;
+  }
+  el.innerHTML = `
+    <table class="posts-table">
+      <thead><tr>
+        <th>Title</th><th>Category</th><th>Status</th><th>Date</th><th>Actions</th>
+      </tr></thead>
+      <tbody>
+        ${userPosts.map(p => `
+          <tr>
+            <td><div class="post-title-cell">${p.title}<small>${p.readTime} · ${p.author}</small></div></td>
+            <td><span class="card-tag ${categoryMap[p.category].cls}" style="font-size:0.7rem">${categoryMap[p.category].label}</span></td>
+            <td><span class="status-badge status-${p.status}">${p.status}</span></td>
+            <td style="color:var(--muted);font-size:0.85rem">${p.date}</td>
+            <td>
+              <div class="action-icons">
+                <button class="icon-btn" onclick='openPost(${JSON.stringify(p)})'>Read</button>
+                <button class="icon-btn del" onclick="deletePost('${p.id}')">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+}
+
+function deletePost(id) {
+  userPosts = userPosts.filter(p => p.id !== id);
+  showToast('Post deleted');
+  renderMyPosts();
+}
+
+/* ══════════════════════════════════════
+   TOAST
+══════════════════════════════════════ */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+renderHomeGrid();
+</script>
+</body>
+</html>
